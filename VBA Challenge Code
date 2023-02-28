@@ -1,0 +1,114 @@
+Sub tickerSummary()
+Dim ws As Worksheet
+Dim i As Double
+Dim j As Double
+Dim ticker As String
+Dim open1 As Double
+Dim volume As Double
+Dim close1 As Double
+Dim yearlyChange As Double
+Dim percentChange As Double
+Dim lastrow As Double
+Dim startrow As Double
+Dim endrow As Double
+Dim lastrow2 As Double
+
+For Each ws In Worksheets
+ws.Activate
+
+i = 2
+
+lastrow = Cells(Rows.Count, "A").End(xlUp).Row
+
+'Adds headers to the sheet for summary data
+Cells(1, "H").Value = "Ticker"
+Cells(1, "I").Value = "Yearly Change"
+Cells(1, "J").Value = "Percent Change"
+Cells(1, "K").Value = "Stock Volume"
+
+For i = 2 To lastrow
+
+'Find first instance of the ticker
+If Cells(i, 1).Value <> Cells(i - 1, 1).Value Then
+open1 = Format(Cells(i, 3).Value, "#.00")
+startrow = Cells(i, 1).Row
+ticker = Cells(i, 1).Value
+
+Cells(Rows.Count, "H").End(xlUp).Offset(1, 0).Activate
+ActiveCell.Value = ticker
+End If
+
+'Find last instance of the ticker
+If Cells(i, 1).Value <> Cells(i + 1, 1).Value Then
+endrow = Cells(i, 1).Row
+close1 = Format(Cells(i, 6).Value, "#.00")
+volume = Application.WorksheetFunction.Sum(Range(Cells(startrow, 7), Cells(endrow, 7)))
+yearlyChange = close1 - open1
+percentChange = (close1 - open1) / open1
+
+Cells(Rows.Count, "I").End(xlUp).Offset(1, 0).Activate
+ActiveCell.Value = Format(yearlyChange, "#.00")
+
+Cells(Rows.Count, "J").End(xlUp).Offset(1, 0).Activate
+ActiveCell.Value = Format(percentChange, "0.00%")
+
+Cells(Rows.Count, "K").End(xlUp).Offset(1, 0).Activate
+ActiveCell.Value = volume
+End If
+
+Next i
+
+'Autofit columns H through K
+Range("H:K").EntireColumn.AutoFit
+
+
+lastrow2 = Cells(Rows.Count, "H").End(xlUp).Row
+
+'for loop to color cells based on yearly change
+For j = 2 To lastrow2
+If Cells(j, "I").Value < 0 Then
+Cells(j, "I").Interior.Color = vbRed
+Else
+Cells(j, "I").Interior.Color = vbGreen
+End If
+
+Next j
+
+Range("M2").Value = "Greatest % Increase"
+Range("M3").Value = "Greatest % decrease"
+Range("M4").Value = "greatest total volume"
+
+Range("N1").Value = "Ticker"
+Range("O1").Value = "Value"
+
+Range("O2").Value = Format(Application.WorksheetFunction.Max(Range(Cells(2, "J"), Cells(lastrow2, "J"))), "0.00%")
+Range("O3").Value = Format(Application.WorksheetFunction.Min(Range(Cells(2, "J"), Cells(lastrow2, "J"))), "0.00%")
+Range("O4").Value = Application.WorksheetFunction.Max(Range(Cells(2, "K"), Cells(lastrow2, "K")))
+
+'This uses the find function to find the greatest % increase in column J then offsets to get the ticker
+hiIncrease = Format(Range("O2").Value, "0.00%")
+Range("J:J").Find(hiIncrease).Activate
+myTicker = ActiveCell.Offset(0, -2).Value
+Range("N2").Value = myTicker
+
+'This uses the find function to find the greatest % decrease in column J then offsets to get the ticker
+hiDecrease = Format(Range("O3").Value, "0.00%")
+Range("J:J").Find(hiDecrease).Activate
+myTicker = ActiveCell.Offset(0, -2).Value
+Range("N3").Value = myTicker
+
+'This uses the find function to find the greatest total volume in column k then offsets to get the ticker
+hiVolume = Range("O4").Value
+Range("K:K").Find(hiVolume).Activate
+myTicker = ActiveCell.Offset(0, -3).Value
+Range("N4").Value = myTicker
+
+Range("M:O").EntireColumn.AutoFit
+
+
+'goes to the next sheet
+Next ws
+
+End Sub
+
+
